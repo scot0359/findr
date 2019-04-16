@@ -1,46 +1,104 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing,
- * software distributed under the License is distributed on an
- * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
- * KIND, either express or implied.  See the License for the
- * specific language governing permissions and limitations
- * under the License.
- */
-var app = {
-    // Application Constructor
-    initialize: function() {
-        document.addEventListener('deviceready', this.onDeviceReady.bind(this), false);
+let scot0359 = {
+
+    markers: [],
+
+    init: function () {
+        document.addEventListener("deviceready", scot0359.getPosition);
     },
 
-    // deviceready Event Handler
-    //
-    // Bind any cordova events here. Common events are:
-    // 'pause', 'resume', etc.
-    onDeviceReady: function() {
-        this.receivedEvent('deviceready');
+    initMap: function (lat, long) {
+        let map;
+
+        map = new google.maps.Map(document.getElementById("map"), {
+            center: {
+                lat: lat, //45.3496711,
+                lng: long //-75.7569551
+            },
+
+            disableDoubleClickZoom: true,
+            zoom: 16,
+            mapTypeId: google.maps.MapTypeId.ROADMAP
+        });
+
+
+        map.addListener("dblclick", function (ev) {
+
+            let label = scot0359.getLabel();
+            
+            if (label === null) {
+                return;
+            }
+
+            let marker = new google.maps.Marker({
+                position: {
+                    lat: ev.latLng.lat(),
+                    lng: ev.latLng.lng()
+                },
+                map: map,
+                animation: google.maps.Animation.DROP,
+                id: Date.now()
+            })
+            scot0359.markers.push(marker);
+
+            console.log("marker id:" + marker.id);
+
+            let infoWindow = new google.maps.InfoWindow({
+                content: `<h1>${label}</h1><button onclick="scot0359.deleteMarker()">Remove</button>`
+            });
+            
+            marker.addListener('click', function () {
+                infoWindow.open(map, marker);
+            });
+
+            let newMarker = {
+                Lat: marker.position.lat(),
+                Lng: marker.position.lng()
+            };
+
+            for (let i = 0; i < newMarker.length; i++) {
+                // localStorage["marker"] = JSON.stringify(newMarker[i]);
+                localStorage.setItem('marker', JSON.stringify(newMarker[i]));
+            }
+            console.log(localStorage["marker"]);
+        });
     },
 
-    // Update DOM on a Received Event
-    receivedEvent: function(id) {
-        var parentElement = document.getElementById(id);
-        var listeningElement = parentElement.querySelector('.listening');
-        var receivedElement = parentElement.querySelector('.received');
+    deleteMarker: function() {
+        for (i = 0; i < scot0359.markers.length; i++) {
+            scot0359.markers[i].setMap(null);
+        }
+    },
 
-        listeningElement.setAttribute('style', 'display:none;');
-        receivedElement.setAttribute('style', 'display:block;');
+    getLabel: function () {
+        let iframe = document.createElement("IFRAME");
+        iframe.setAttribute("src", 'data:text/plain,');
+        document.documentElement.appendChild(iframe);
+        let labelText = window.frames[0].window.prompt("Label for marker", "");
+        iframe.parentNode.removeChild(iframe);
+        return labelText;
+    },
 
-        console.log('Received Event: ' + id);
-    }
+    getPosition: function () {
+        if (navigator.geolocation) {
+            let giveUp = 1000 * 30; //30 seconds
+            let maxAge = 1000 * 60 * 60; //one hour
+            options = {
+                enableHighAccuracy: true,
+                timeout: giveUp,
+                maximumAge: maxAge,
+            }
+            navigator.geolocation.getCurrentPosition(scot0359.gotPos, scot0359.posFail, options);
+        }
+    },
+
+    gotPos: function (position) {
+        let lat = position.coords.latitude;
+        let long = position.coords.longitude;
+        console.log(lat, long);
+        scot0359.initMap(lat, long);
+
+    },
+
 };
 
-app.initialize();
+scot0359.init();
