@@ -56,8 +56,7 @@ let scot0359 = {
             };
 
             for (let i = 0; i < newMarker.length; i++) {
-                // localStorage["marker"] = JSON.stringify(newMarker[i]);
-                localStorage.setItem('marker', JSON.stringify(newMarker[i]));
+                localStorage["marker"] = JSON.stringify(newMarker[i]);
             }
             console.log(localStorage["marker"]);
         });
